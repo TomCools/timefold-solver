@@ -85,6 +85,11 @@
       <artifactId>spring-web</artifactId>
       <optional>true</optional>
     </dependency>
+    <!-- standardized nullness annotations  -->
+    <dependency>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
+    </dependency>
 
     <!-- Testing -->
     <dependency>
@@ -138,16 +143,26 @@
       <artifactId>snakeyaml</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!-- standardized nullness annotations  -->
-    <dependency>
-      <groupId>org.jspecify</groupId>
-      <artifactId>jspecify</artifactId>
-    </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-test-compile</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <useModulePath>false</useModulePath>
+        </configuration>
+      </plugin>
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
@@ -159,6 +174,12 @@
             <dependency>org.springframework.boot:*</dependency>
             <dependency>ai.timefold.solver:timefold-solver-core</dependency>
           </ignoredUnusedDeclaredDependencies>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <useModulePath>false</useModulePath>
         </configuration>
       </plugin>
     </plugins>

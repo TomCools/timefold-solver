@@ -124,6 +124,17 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerArgs>
+            <!-- fixes optional dependencies and JPMS -->
+            <arg>--add-reads</arg>
+            <arg>ai.timefold.solver.core=ALL-UNNAMED</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.revapi</groupId>
         <artifactId>revapi-maven-plugin</artifactId>
         <configuration> <!-- Remove this override when oldTimefoldVersion is >= 1.9.0 -->
