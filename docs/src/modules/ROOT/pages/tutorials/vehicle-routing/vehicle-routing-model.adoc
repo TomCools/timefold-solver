@@ -1,0 +1,268 @@
+[#vrpQuarkusQuickStartDomainModel]
+= Model the domain objects
+:imagesdir: ../..
+
+Your goal is to assign each visit to a vehicle.
+You will create these classes:
+
+image::quickstart/vehicle-routing/vehicleRoutingClassDiagramPure.png[]
+
+== Location
+
+The `Location` class is used to represent the destination for deliveries or the home location for vehicles.
+
+[tabs]
+====
+Java::
++
+--
+Create the `src/main/java/org/acme/vehiclerouting/domain/Location.java` class:
+
+[source,java]
+----
+package org.acme.vehiclerouting.domain;
+
+public record Location(double latitude, double longitude) {}
+----
+--
+
+Kotlin::
++
+--
+Create the `src/main/kotlin/org/acme/vehiclerouting/domain/Location.kt` class:
+
+[source,kotlin]
+----
+package org.acme.vehiclerouting.domain
+
+data class Location(val latitude: Double, val longitude: Double) {}
+----
+--
+====
+
+== Vehicle
+
+`Vehicle` has a defined route plan with scheduled visits to make.
+Each vehicle has a specific departure time and starting location.
+It returns to its home location after completing the route and has a maximum capacity that must not be exceeded.
+
+During solving, Timefold Solver updates the `visits` field of the `Vehicle` class to assign a list of visits.
+Because Timefold Solver changes this field, `Vehicle` is a https://timefold.ai/docs/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningEntity[_planning entity_]:
+
+image::quickstart/vehicle-routing/vehicleRoutingClassDiagramAnnotated.png[]
+
+The `visits` field is a genuine variable that changes during the solving process.
+To ensure that Timefold Solver recognizes it as a https://timefold.ai/docs/timefold-solver/latest/using-timefold-solver/modeling-planning-problems#planningListVariable[sequence of connected variables],
+the field must have an `@PlanningListVariable` annotation indicating that the solver can distribute a subset of the
+available visits to it.
+The objective is to create an ordered scheduled visit plan for each vehicle.
+
+[tabs]
+====
+Java::
++
+--
+Create the `src/main/java/org/acme/vehiclerouting/domain/Vehicle.java` class:
+
+[source,java]
+----
+package org.acme.vehiclerouting.domain;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
+import ai.timefold.solver.core.api.domain.lookup.PlanningId;
+import ai.timefold.solver.core.api.domain.variable.PlanningListVariable;
+
+@PlanningEntity
+public class Vehicle {
+
+    @PlanningId
+    private String id;
+    private int capacity;
+    private Location homeLocation;
+
+    private LocalDateTime departureTime;
+
+    @PlanningListVariable
+    private List<Visit> visits;
+
+    public Vehicle() {
+        // Timefold needs an empty constructor
+    }
+
+    public Vehicle(String id, int capacity, Location homeLocation, LocalDateTime departureTime) {
+        this.id = id;
+        this.capacity = capacity;
+        this.homeLocation = homeLocation;
+        this.departureTime = departureTime;
+        this.visits = new ArrayList<>();
+    }
+
+    // Getters and Setters excluded
+
+    public int getTotalDemand() {
+        int totalDemand = 0;
+        for (Visit visit : visits) {
+            totalDemand += visit.getDemand();
+        }
+        return totalDemand;
+    }
+
+    @Override
+    public String toString() {
+        return id;
+    }
+}
+----
+--
+
+Kotlin::
++
+--
+Create the `src/main/kotlin/org/acme/vehiclerouting/domain/Vehicle.kt` class:
+
+[source,kotlin]
+----
+package org.acme.vehiclerouting.domain
+
+import java.time.LocalDateTime
+import java.util.ArrayList
+
+import ai.timefold.solver.core.api.domain.entity.PlanningEntity
+import ai.timefold.solver.core.api.domain.lookup.PlanningId
+import ai.timefold.solver.core.api.domain.variable.PlanningListVariable
+
+@PlanningEntity
+class Vehicle {
+    @PlanningId
+    lateinit var id: String
+    var capacity: Int = 0
+    lateinit var homeLocation: Location
+    lateinit var departureTime: LocalDateTime
+
+    @PlanningListVariable
+    var visits: List<Visit>? = null
+
+    constructor()
+
+    constructor(id: String, capacity: Int, homeLocation: Location, departureTime: LocalDateTime) {
+        this.id = id
+        this.capacity = capacity
+        this.homeLocation = homeLocation
+        this.departureTime = departureTime
+        this.visits = ArrayList()
+    }
+
+    val totalDemand: Long
+        get() {
+            var totalDemand = 0L
+            for (visit in visits!!) {
+                totalDemand += visit.demand
+            }
+            return totalDemand
+        }
+
+    override fun toString(): String {
+        return id
+    }
+}
+----
+--
+====
+
+The `Vehicle` class has an `@PlanningEntity` annotation,
+so Timefold Solver knows that this class changes during solving because it contains one or more planning variables.
+
+Notice the `toString()` method keeps the output short,
+so it is easier to read Timefold Solver's `DEBUG` or `TRACE` log, as shown later.
+
+[NOTE]
+====
+Determining the `@PlanningListVariable` fields for an arbitrary constraint solving use case
+is often challenging the first time.
+Read xref:design-patterns/design-patterns.adoc#domainModelingGuide[the domain modeling guidelines] to avoid common pitfalls.
+====
+
+== Visit
+
+The `Visit` class represents a delivery that needs to be made by vehicles.
+A visit includes a destination location and a demand that needs to be fulfilled by the vehicle.
+
+[tabs]
+====
+Java::
++
+--
+Create the `src/main/java/org/acme/vehiclerouting/domain/Visit.java` class:
+
+[source,java]
+----
+package org.acme.vehiclerouting.domain;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+
+public class Visit {
+
+    private String id;
+    private String name;
+    private Location location;
+    private int demand;
+
+    public Visit() {
+    }
+
+    public Visit(String id, String name, Location location, int demand) {
+        this.id = id;
+        this.name = name;
+        this.location = location;
+        this.demand = demand;
+    }
+
+    // Getters and Setters excluded
+
+   @Override
+    public String toString() {
+        return id;
+    }
+}
+----
+--
+
+Kotlin::
++
+--
+Create the `src/main/kotlin/org/acme/vehiclerouting/domain/Visit.kt` class:
+
+[source,kotlin]
+----
+package org.acme.vehiclerouting.domain
+
+import java.time.Duration
+import java.time.LocalDateTime
+
+class Visit {
+    lateinit var name: String
+    lateinit var location: Location
+    var demand: Int = 0
+
+    constructor()
+
+    constructor(
+        id: String, name: String, location: Location, demand: Int) {
+        this.id = id
+        this.name = name
+        this.location = location
+        this.demand = demand
+    }
+
+    override fun toString(): String {
+        return id
+    }
+}
+----
+--
+====
