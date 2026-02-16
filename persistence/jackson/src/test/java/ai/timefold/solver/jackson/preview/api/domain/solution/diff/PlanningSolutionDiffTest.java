@@ -2,8 +2,8 @@ package ai.timefold.solver.jackson.preview.api.domain.solution.diff;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import ai.timefold.solver.core.testdomain.equals.TestdataEqualsByCodeSolution;
 import ai.timefold.solver.jackson.api.TimefoldJacksonModule;
+import ai.timefold.solver.jackson.testdomain.equals.TestdataEqualsByCodeSolution;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,15 +1,17 @@
 package ai.timefold.solver.jackson.testdomain;
 
+import ai.timefold.solver.core.api.domain.lookup.PlanningId;
 import ai.timefold.solver.jackson.testutil.CodeAssertable;
 
-public abstract class JacksonTestdataObject implements CodeAssertable {
+public class TestdataObject implements CodeAssertable {
 
+    @PlanningId
     protected String code;
 
-    public JacksonTestdataObject() {
+    public TestdataObject() {
     }
 
-    public JacksonTestdataObject(String code) {
+    public TestdataObject(String code) {
         this.code = code;
     }
 
